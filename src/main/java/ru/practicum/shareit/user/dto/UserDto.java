@@ -1,7 +1,7 @@
-package ru.practicum.shareit.item.dto;
+package ru.practicum.shareit.user.dto;
 
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -12,7 +12,7 @@ import ru.practicum.shareit.validation.Update;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ItemDto {
+public class UserDto {
     private Long id;
 
     @NotBlank(groups = Create.class)
@@ -21,8 +21,6 @@ public class ItemDto {
 
     @NotBlank(groups = Create.class)
     @Pattern(regexp = "(?s).*\\S.*", groups = Update.class)
-    private String description;
-
-    @NotNull(groups = Create.class)
-    private Boolean available;
+    @Email(groups = {Create.class, Update.class})
+    private String email;
 }
