@@ -1,9 +1,11 @@
-package ru.practicum.shareit.item;
+package ru.practicum.shareit.item.service;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import ru.practicum.shareit.exception.ForbiddenException;
 import ru.practicum.shareit.exception.NotFoundException;
+import ru.practicum.shareit.item.InMemoryItemRepository;
+import ru.practicum.shareit.item.ItemMapper;
 import ru.practicum.shareit.item.dto.ItemDto;
 import ru.practicum.shareit.item.model.Item;
 import ru.practicum.shareit.user.User;
@@ -30,6 +32,12 @@ public class ItemServiceImpl implements ItemService {
         Item existing = findItem(itemId);
         if (existing.getOwner().getId() != userId) {
             throw new ForbiddenException("Only the owner can update item: " + itemId);
+        }
+        if (dto.getName() != null && dto.getName().isBlank()) {
+            throw new IllegalArgumentException("Item name must not be blank");
+        }
+        if (dto.getDescription() != null && dto.getDescription().isBlank()) {
+            throw new IllegalArgumentException("Item description must not be blank");
         }
         Item updated = new Item(itemId,
                 dto.getName() == null ? existing.getName() : dto.getName(),
