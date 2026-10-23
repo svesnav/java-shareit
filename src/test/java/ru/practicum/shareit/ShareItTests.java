@@ -185,8 +185,12 @@ class ShareItTests {
         for (User user : List.of(booker, outsider)) {
             mvc.perform(patch("/bookings/{id}", id).header(USER_HEADER, user.getId())
                             .param("approved", String.valueOf(approved)))
-                    .andExpect(status().isNotFound());
+                    .andExpect(status().isForbidden());
         }
+        assertThat(bookings.findById(id).orElseThrow().getStatus()).isEqualTo(BookingStatus.WAITING);
+        mvc.perform(patch("/bookings/{id}", Long.MAX_VALUE).header(USER_HEADER, owner.getId())
+                        .param("approved", String.valueOf(approved)))
+                .andExpect(status().isNotFound());
         mvc.perform(patch("/bookings/{id}", id).header(USER_HEADER, owner.getId()))
                 .andExpect(status().isBadRequest());
         mvc.perform(patch("/bookings/{id}", id).header(USER_HEADER, owner.getId()).param("approved", "invalid"))
