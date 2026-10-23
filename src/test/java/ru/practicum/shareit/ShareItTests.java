@@ -182,8 +182,8 @@ class ShareItTests {
     @ValueSource(booleans = {true, false})
     void onlyOwnerCanDecideOnce(boolean approved) throws Exception {
         long id = createBooking();
-        for (User user : List.of(booker, outsider)) {
-            mvc.perform(patch("/bookings/{id}", id).header(USER_HEADER, user.getId())
+        for (long userId : List.of(booker.getId(), outsider.getId(), Long.MAX_VALUE)) {
+            mvc.perform(patch("/bookings/{id}", id).header(USER_HEADER, userId)
                             .param("approved", String.valueOf(approved)))
                     .andExpect(status().isForbidden());
         }

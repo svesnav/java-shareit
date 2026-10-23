@@ -54,7 +54,6 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto approve(long userId, long bookingId, boolean approved) {
-        findUser(userId);
         Booking booking = bookingRepository.findLockedById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
         if (booking.getItem().getOwner().getId() != userId) {
