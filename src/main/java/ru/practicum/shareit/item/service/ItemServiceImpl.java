@@ -109,7 +109,6 @@ public class ItemServiceImpl implements ItemService {
     @Override
     @Transactional
     public CommentDto addComment(long userId, long itemId, CommentDto dto) {
-        checkText(dto.text(), "Comment text", 2000);
         User author = findUser(userId);
         Item item = findItem(itemId);
         LocalDateTime now = LocalDateTime.now();
@@ -117,7 +116,7 @@ public class ItemServiceImpl implements ItemService {
                 itemId, userId, BookingStatus.APPROVED, now)) {
             throw new IllegalArgumentException("A comment requires a completed approved booking of this item");
         }
-        return CommentMapper.toDto(commentRepository.save(new Comment(null, dto.text(), item, author, now)));
+        return CommentMapper.toDto(commentRepository.save(CommentMapper.toModel(dto, item, author, now)));
     }
 
     private ItemDetailsDto toDetails(Item item, List<Booking> bookings, List<Comment> comments, LocalDateTime now) {

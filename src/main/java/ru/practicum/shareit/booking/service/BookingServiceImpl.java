@@ -33,10 +33,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto create(long userId, BookingDto dto) {
-        LocalDateTime now = LocalDateTime.now();
-        if (dto.getItemId() == null || dto.getItemId() <= 0 || dto.getStart() == null || dto.getEnd() == null
-                || dto.getStart().isBefore(now) || !dto.getEnd().isAfter(dto.getStart())) {
-            throw new IllegalArgumentException("Booking dates must be in the future and end must be after start");
+        if (!dto.getEnd().isAfter(dto.getStart())) {
+            throw new IllegalArgumentException("Booking end must be after start");
         }
         User booker = findUser(userId);
         Item item = itemRepository.findById(dto.getItemId())
@@ -47,15 +45,14 @@ public class BookingServiceImpl implements BookingService {
         if (!Boolean.TRUE.equals(item.getAvailable())) {
             throw new IllegalArgumentException("Item is not available for booking");
         }
-        Booking booking = new Booking(null, dto.getStart(), dto.getEnd(), item, booker, BookingStatus.WAITING);
+        Booking booking = BookingMapper.toModel(dto, item, booker);
         return BookingMapper.toDto(bookingRepository.save(booking));
     }
 
     @Override
     @Transactional
     public BookingResponseDto approve(long userId, long bookingId, boolean approved) {
-        Booking booking = bookingRepository.findLockedById(bookingId)
-                .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
+        Booking booking = findBooking(bookingId);
         if (booking.getItem().getOwner().getId() != userId) {
             throw new ForbiddenException("Only the item owner can approve or reject booking: " + bookingId);
         }
@@ -105,6 +102,11 @@ public class BookingServiceImpl implements BookingService {
         };
         return bookingRepository.findAll(participant.and(byState), Sort.by(Sort.Direction.DESC, "start", "id"))
                 .stream().map(BookingMapper::toDto).toList();
+    }
+
+    private Booking findBooking(long bookingId) {
+        return bookingRepository.findLockedById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking not found: " + bookingId));
     }
 
     private User findUser(long userId) {
