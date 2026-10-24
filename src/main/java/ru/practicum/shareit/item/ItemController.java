@@ -1,5 +1,6 @@
 package ru.practicum.shareit.item;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.validation.annotation.Validated;
@@ -13,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import ru.practicum.shareit.item.dto.ItemDto;
+import ru.practicum.shareit.item.dto.CommentDto;
+import ru.practicum.shareit.item.dto.ItemDetailsDto;
 import ru.practicum.shareit.item.service.ItemService;
 import ru.practicum.shareit.validation.Create;
 import ru.practicum.shareit.validation.Update;
@@ -41,13 +44,13 @@ public class ItemController {
     }
 
     @GetMapping("/{itemId}")
-    public ItemDto getById(@RequestHeader("X-Sharer-User-Id") long userId, @PathVariable long itemId) {
+    public ItemDetailsDto getById(@RequestHeader("X-Sharer-User-Id") long userId, @PathVariable long itemId) {
         log.info("GET /items/{}: userId={}", itemId, userId);
-        return itemService.getById(itemId);
+        return itemService.getById(userId, itemId);
     }
 
     @GetMapping
-    public List<ItemDto> getByOwner(@RequestHeader("X-Sharer-User-Id") long userId) {
+    public List<ItemDetailsDto> getByOwner(@RequestHeader("X-Sharer-User-Id") long userId) {
         log.info("GET /items: userId={}", userId);
         return itemService.getByOwner(userId);
     }
@@ -56,5 +59,12 @@ public class ItemController {
     public List<ItemDto> search(@RequestHeader("X-Sharer-User-Id") long userId, @RequestParam String text) {
         log.info("GET /items/search: userId={}", userId);
         return itemService.search(text);
+    }
+
+    @PostMapping("/{itemId}/comment")
+    public CommentDto addComment(@RequestHeader("X-Sharer-User-Id") long userId, @PathVariable long itemId,
+                                 @Valid @RequestBody CommentDto dto) {
+        log.info("POST /items/{}/comment: userId={}", itemId, userId);
+        return itemService.addComment(userId, itemId, dto);
     }
 }

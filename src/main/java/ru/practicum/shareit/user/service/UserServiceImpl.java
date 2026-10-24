@@ -1,23 +1,27 @@
 package ru.practicum.shareit.user.service;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import ru.practicum.shareit.exception.ConflictException;
 import ru.practicum.shareit.exception.NotFoundException;
-import ru.practicum.shareit.user.InMemoryUserRepository;
 import ru.practicum.shareit.user.User;
 import ru.practicum.shareit.user.UserMapper;
+import ru.practicum.shareit.user.UserRepository;
 import ru.practicum.shareit.user.dto.UserDto;
 
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class UserServiceImpl implements UserService {
-    private final InMemoryUserRepository userRepository;
+    private final UserRepository userRepository;
 
     @Override
-    public synchronized UserDto create(UserDto dto) {
+    @Transactional
+    public UserDto create(UserDto dto) {
         checkName(dto.getName());
         checkEmail(dto.getEmail(), null);
         User user = UserMapper.toModel(dto);
@@ -26,13 +30,16 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public synchronized UserDto update(long userId, UserDto dto) {
+    @Transactional
+    public UserDto update(long userId, UserDto dto) {
         User existing = findUser(userId);
         String email = dto.getEmail() == null ? existing.getEmail() : dto.getEmail();
         checkEmail(email, userId);
         String name = dto.getName() == null ? existing.getName() : dto.getName();
         checkName(name);
-        return UserMapper.toDto(userRepository.save(new User(userId, name, email)));
+        existing.setName(name);
+        existing.setEmail(email);
+        return UserMapper.toDto(userRepository.save(existing));
     }
 
     @Override
@@ -42,13 +49,13 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getAll() {
-        return userRepository.findAll().stream().map(UserMapper::toDto).toList();
+        return userRepository.findAll(Sort.by("id")).stream().map(UserMapper::toDto).toList();
     }
 
     @Override
-    public synchronized void delete(long userId) {
-        findUser(userId);
-        userRepository.deleteById(userId);
+    @Transactional
+    public void delete(long userId) {
+        userRepository.delete(findUser(userId));
     }
 
     private User findUser(long userId) {
@@ -57,16 +64,18 @@ public class UserServiceImpl implements UserService {
     }
 
     private void checkName(String name) {
-        if (name == null || name.isBlank()) {
-            throw new IllegalArgumentException("User name must not be blank");
+        if (name == null || name.isBlank() || name.length() > 255) {
+            throw new IllegalArgumentException("User name must not be blank or longer than 255 characters");
         }
     }
 
     private void checkEmail(String email, Long userId) {
-        if (email == null || email.isBlank() || !email.contains("@")) {
-            throw new IllegalArgumentException("Email must not be blank and must contain @");
+        if (email == null || email.isBlank() || !email.contains("@") || email.length() > 512) {
+            throw new IllegalArgumentException("Email must not be blank, must contain @ and fit in 512 characters");
         }
-        if (userRepository.existsByEmailAndIdNot(email, userId)) {
+        boolean exists = userId == null ? userRepository.existsByEmailIgnoreCase(email)
+                : userRepository.existsByEmailIgnoreCaseAndIdNot(email, userId);
+        if (exists) {
             throw new ConflictException("Email is already in use: " + email);
         }
     }

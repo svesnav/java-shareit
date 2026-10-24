@@ -3,6 +3,7 @@ package ru.practicum.shareit.item.dto;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -17,10 +18,12 @@ public class ItemDto {
 
     @NotBlank(groups = Create.class)
     @Pattern(regexp = "(?s).*\\S.*", groups = Update.class)
+    @Size(max = 255, groups = {Create.class, Update.class})
     private String name;
 
     @NotBlank(groups = Create.class)
     @Pattern(regexp = "(?s).*\\S.*", groups = Update.class)
+    @Size(max = 2000, groups = {Create.class, Update.class})
     private String description;
 
     @NotNull(groups = Create.class)

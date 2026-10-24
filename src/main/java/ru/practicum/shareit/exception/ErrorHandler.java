@@ -1,6 +1,7 @@
 package ru.practicum.shareit.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestValueException;
@@ -13,6 +14,12 @@ import java.util.Map;
 
 @RestControllerAdvice
 public class ErrorHandler {
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public Map<String, String> handleDataConflict(DataIntegrityViolationException exception) {
+        return Map.of("error", "The operation conflicts with stored data");
+    }
+
     @ExceptionHandler(NotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public Map<String, String> handleNotFound(NotFoundException exception) {
